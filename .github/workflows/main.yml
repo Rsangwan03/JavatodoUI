@@ -26,4 +26,4 @@ jobs:
       - name: Verify JDK Installation
         run: |
           java -version
-          javac -version  # Verify JDK compiler installation
+          mvn -version
