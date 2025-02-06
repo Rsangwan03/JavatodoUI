@@ -1,0 +1,29 @@
+name: JDK Setup Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  setup-jdk:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'  # Popular OpenJDK distribution
+          java-version: '17'       # Change to the version you need (e.g., 8, 11, 21)
+          cache: 'maven'           # Optional: Cache Maven dependencies
+
+      - name: Verify JDK Installation
+        run: |
+          java -version
+          javac -version  # Verify JDK compiler installation
