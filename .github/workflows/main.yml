@@ -7,7 +7,7 @@ on:
 
 jobs:
   setup-jdk:
-    runs-on: self-hosted
+    runs-on: self-hosted  # Use your self-hosted runner
 
     steps:
       - name: Checkout Repository
@@ -19,13 +19,45 @@ jobs:
           distribution: 'temurin'  # Popular OpenJDK distribution
           java-version: '17'       # Change to the version you need (e.g., 8, 11, 21)
           cache: 'maven'           # Optional: Cache Maven dependencies
+
       - name: Install Maven (if not pre-installed)
         run: |
           sudo apt update
           sudo apt install -y maven
-          mvn clean package
 
-      - name: Verify JDK Installation
+      - name: Build WAR using Maven
+        run: |
+          mvn clean package  # This builds the WAR file
+
+      - name: Verify JDK and Maven Installation
         run: |
           java -version
           mvn -version
+
+      - name: Install sshpass (for SSH with password)
+        run: |
+          sudo apt update
+          sudo apt install -y sshpass
+
+      - name: Deploy WAR to Tomcat
+        run: |
+          sshpass -p ${{ secrets.SSH_PASSWORD }} ssh -o StrictHostKeyChecking=no adminuser@${{ secrets.VM_IP_ADDRESS }} <<EOF
+            # Install Tomcat if not already installed
+            if [ ! -d "/opt/tomcat" ]; then
+              sudo apt update
+              sudo apt install -y openjdk-17-jdk wget
+              TOMCAT_VERSION=9.0.85
+              wget https://downloads.apache.org/tomcat/tomcat-9/v\${TOMCAT_VERSION}/bin/apache-tomcat-\${TOMCAT_VERSION}.tar.gz
+              sudo mkdir -p /opt/tomcat
+              sudo tar -xvzf apache-tomcat-\${TOMCAT_VERSION}.tar.gz -C /opt/tomcat --strip-components=1
+              sudo chmod +x /opt/tomcat/bin/*.sh
+              /opt/tomcat/bin/startup.sh
+            fi
+
+            # Move the WAR file to Tomcat's webapps folder
+            sudo mv target/JavaLoginShowcase-1.0.0.war /opt/tomcat/webapps/
+
+            # Restart Tomcat to deploy the WAR file
+            sudo /opt/tomcat/bin/shutdown.sh
+            sudo /opt/tomcat/bin/startup.sh
+          EOF
