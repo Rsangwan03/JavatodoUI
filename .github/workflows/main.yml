@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
 
 jobs:
   setup-jdk:
@@ -22,6 +19,10 @@ jobs:
           distribution: 'temurin'  # Popular OpenJDK distribution
           java-version: '17'       # Change to the version you need (e.g., 8, 11, 21)
           cache: 'maven'           # Optional: Cache Maven dependencies
+      - name: Install Maven (if not pre-installed)
+        run: |
+          sudo apt update
+          sudo apt install -y maven
 
       - name: Verify JDK Installation
         run: |
